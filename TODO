@@ -5,7 +5,7 @@ Goal:
 
 TODO:
 
-- add set/get/delete key val
+DONE - add set/get/delete key val
 
 - represent as Ops
     - Op can serialise to string. Yay.

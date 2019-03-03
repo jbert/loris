@@ -23,21 +23,25 @@ func testAll(t *testing.T, s Store) {
 func testBasic(t *testing.T, s Store) {
 	a := assert.New(t)
 	a.Equal([]Key{}, s.Keys())
+	a.Equal(0, s.Len())
 
 	a.NoError(s.Set(TK1, TV1))
 	v, err := s.Get(TK1)
 	a.NoError(err)
 	a.Equal(TV1, v)
 	a.Equal([]Key{TK1}, s.Keys())
+	a.Equal(1, s.Len())
 
 	a.NoError(s.Set(TK2, TV2))
 	v, err = s.Get(TK2)
 	a.NoError(err)
 	a.Equal(TV2, v)
 	a.Equal([]Key{TK1, TK2}, s.Keys())
+	a.Equal(2, s.Len())
 
 	a.NoError(s.Del(TK1))
 	v, err = s.Get(TK1)
 	a.EqualError(err, ErrNotExist.Error(), ErrNotExist)
 	a.Equal([]Key{TK2}, s.Keys())
+	a.Equal(1, s.Len())
 }

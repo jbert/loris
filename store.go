@@ -13,6 +13,7 @@ type Store interface {
 	Del(k Key) error
 	// TODO: keys isn't performance critical but this interface sucks
 	Keys() []Key
+	Len() int
 }
 
 type MutexMapStore struct {
@@ -62,4 +63,11 @@ func (mms *MutexMapStore) Keys() []Key {
 		keys = append(keys, k)
 	}
 	return keys
+}
+
+func (mms *MutexMapStore) Len() int {
+	mms.Lock()
+	defer mms.Unlock()
+
+	return len(mms.m)
 }
