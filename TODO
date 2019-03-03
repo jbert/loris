@@ -1,0 +1,33 @@
+Goal:
+
+- outperform redis on a benchmark on multi-core for subset of ops
+
+
+TODO:
+
+- add set/get/delete key val
+
+- represent as Ops
+    - Op can serialise to string. Yay.
+
+- single map in server
+
+- add tests (under race detector) to trigger
+    - can just inject Ops into a server instance
+    - although going over protocol allows test against redis
+
+- add performance measure (ops/sec under a defined load)
+    - or is there a redis-bench
+
+- start performance table
+    - compare redis with goredis?
+
+- add mutex
+    - take performance measure
+
+- add 2x or 10x sub-maps, with hash of key -> submap
+    - mutex on submap
+    - take performance measure
+
+- try actor-model submap
+    - take performance measure
