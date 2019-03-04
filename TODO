@@ -10,6 +10,12 @@ DONE - add set/get/delete key val
 - represent as Ops
     - Op can serialise to string. Yay.
 
+- find resp grammar
+    - parse RESP
+    - compose RESP
+
+- make ops consume resp and return resp?
+
 - single map in server
 
 - add tests (under race detector) to trigger

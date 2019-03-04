@@ -10,16 +10,11 @@ import (
 type Key string
 type Val []byte
 
-type ServerOp func(*Server, io.Writer) error
+type ServerOp func(*Server, io.Writer) (error, bool)
 
 type Server struct {
 	store Store
 	ctx   context.Context
-}
-
-func (s *Server) Apply(conn net.Conn, op ServerOp) error {
-	op(s, conn)
-	return nil
 }
 
 func New() *Server {
@@ -55,10 +50,26 @@ func (s *Server) handleConnection(ctx context.Context, conn net.Conn) {
 		conn.Close()
 		log.Printf("CONN %d - closed", id)
 	}()
-	op := func(s *Server, w io.Writer) error {
-		err := s.store.Set(Key(fmt.Sprintf("key %d", id)), Val([]byte{1, 2, 3}))
-		fmt.Fprintf(w, "Server has %d keys\n", s.store.Len())
-		return err
+
+	for {
+		op, err := ParseCommand(conn)
+		log.Printf("Op [%v] err [%v]", op, err)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			// TODO: send resp
+			fmt.Fprintf(conn, "-%s\r\n", err.Error())
+			continue
+		}
+
+		err, ok := op(s, conn)
+		if err != nil {
+			// TODO: send resp
+			fmt.Fprintf(conn, "-%s\r\n", err.Error())
+		}
+		if !ok {
+			break
+		}
 	}
-	s.Apply(conn, ServerOp(op))
 }
