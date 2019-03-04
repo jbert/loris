@@ -10,8 +10,8 @@ DONE - add set/get/delete key val
 - represent as Ops
     - Op can serialise to string. Yay.
 
-- find resp grammar
-    - parse RESP
+WIP - find resp grammar
+    WIP - parse RESP
     - compose RESP
 
 - make ops consume resp and return resp?

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type Typ interface {
@@ -35,10 +36,8 @@ func readRespLine(r *bufio.Reader) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Failed to read line: %s", err)
 	}
-	if len(l) == 0 || l[len(l)-1] != '\r' {
-		return "", fmt.Errorf("No CR in line ending")
-	}
-	return l[:len(l)-1], nil
+	l = strings.TrimRight(l, "\r\n")
+	return l, nil
 }
 
 func ParseArray(r *bufio.Reader) (Typ, error) {
