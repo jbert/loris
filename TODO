@@ -29,6 +29,8 @@ WIP - find resp grammar
     - needed for 'COMMAND' response
     - make the text -> code representable in data for ParseCommand
         
+- add sharded
+    - need to make a ctor?
 
 - make ops consume resp and return resp?
 

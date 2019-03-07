@@ -13,25 +13,21 @@ import (
 type ServerOp func(*Server, io.Writer) (resp.Typ, bool)
 
 type Server struct {
-	store store.Store
-	ctx   context.Context
+	store  store.Store
+	ctx    context.Context
+	cancel context.CancelFunc
 
 	debug bool
 }
 
-func NewWithStore(s store.Store) *Server {
+func NewWithStore(s store.Store, debug bool) *Server {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &Server{
-		store: s,
-		ctx:   context.Background(),
-		debug: false,
+		store:  s,
+		debug:  debug,
+		ctx:    ctx,
+		cancel: cancel,
 	}
-}
-
-func New() *Server {
-	return NewWithStore(
-		//		store: store.NewMutexMapStore(),
-		store.NewShardedStore(func() store.Store { return store.NewMutexMapStore() }),
-	)
 }
 
 func (s *Server) ListenAndServe(hostport string) error {
@@ -41,16 +37,23 @@ func (s *Server) ListenAndServe(hostport string) error {
 		return fmt.Errorf("Failed to listen: %s", err)
 	}
 	conn_id := 0
-	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			log.Printf("Failed to accept: %s", err)
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				log.Printf("Failed to accept: %s", err)
+			}
+			go s.handleConnection(context.WithValue(s.ctx, "id", conn_id), conn)
+			conn_id += 1
 		}
-		go s.handleConnection(context.WithValue(s.ctx, "id", conn_id), conn)
-		conn_id += 1
-	}
+	}()
+	<-s.ctx.Done()
 
 	return nil
+}
+
+func (s *Server) StartShutdown() {
+	s.cancel()
 }
 
 type DebugReader struct {

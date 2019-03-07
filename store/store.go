@@ -126,7 +126,7 @@ type Mutex struct {
 	s Store
 }
 
-func NewMutex(s Store) *MutexStore {
+func NewMutex(s Store) *Mutex {
 	return &Mutex{
 		s: s,
 	}
@@ -135,31 +135,31 @@ func NewMutex(s Store) *MutexStore {
 func (ms *Mutex) Set(k Key, v Val) error {
 	ms.Lock()
 	defer ms.Unlock()
-	return ms.Set(k, v)
+	return ms.s.Set(k, v)
 }
 
 func (ms *Mutex) Get(k Key) (Val, error) {
 	ms.Lock()
 	defer ms.Unlock()
-	return ms.Get(k)
+	return ms.s.Get(k)
 }
 
 func (ms *Mutex) Del(k Key) error {
 	ms.Lock()
 	defer ms.Unlock()
-	return ms.Del(k)
+	return ms.s.Del(k)
 }
 
 func (ms *Mutex) Keys() []Key {
 	ms.Lock()
 	defer ms.Unlock()
-	return ms.Keys()
+	return ms.s.Keys()
 }
 
 func (ms *Mutex) Len() int {
 	ms.Lock()
 	defer ms.Unlock()
-	return ms.Len()
+	return ms.s.Len()
 }
 
 type MutexMap struct {

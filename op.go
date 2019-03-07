@@ -92,6 +92,17 @@ func decodeRespCommand(rCmd resp.Typ) (ServerOp, error) {
 			return "OK", true
 		}
 		return op, nil
+	case "quit":
+		op := func(s *Server, w io.Writer) (resp.Typ, bool) {
+			return "OK", false
+		}
+		return op, nil
+	case "shutdown":
+		op := func(s *Server, w io.Writer) (resp.Typ, bool) {
+			s.StartShutdown()
+			return "OK", false
+		}
+		return op, nil
 	default:
 		return nil, fmt.Errorf("Unrecognised command: %s", bufs[0])
 	}
