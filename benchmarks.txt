@@ -1,0 +1,82 @@
+Mon  4 Mar 14:44:35 GMT 2019
+
+MMS:
+SET,48971
+GET,48828
+
+redis:
+SET,68775
+GET,70175
+
+
+-----------------------
+Mon  4 Mar 14:44:35 GMT 2019
+
+set, get, del implemented
+single map[string][]byte with mutex
+
+type MutexMapStore struct {
+	sync.Mutex
+	m map[Key]Val
+}
+
+
+cicada:~$ redis-benchmark -t set,get -p 6378          
+====== SET ======
+  100000 requests completed in 2.04 seconds
+  50 parallel clients
+  3 bytes payload
+  keep alive: 1
+
+98.79% <= 1 milliseconds
+99.79% <= 2 milliseconds
+99.95% <= 3 milliseconds
+99.98% <= 4 milliseconds
+100.00% <= 5 milliseconds
+48971.59 requests per second
+
+====== GET ======
+  100000 requests completed in 2.05 seconds
+  50 parallel clients
+  3 bytes payload
+  keep alive: 1
+
+98.22% <= 1 milliseconds
+99.54% <= 2 milliseconds
+99.76% <= 3 milliseconds
+99.88% <= 4 milliseconds
+99.89% <= 5 milliseconds
+99.89% <= 6 milliseconds
+99.89% <= 7 milliseconds
+99.90% <= 8 milliseconds
+99.91% <= 9 milliseconds
+99.99% <= 10 milliseconds
+100.00% <= 11 milliseconds
+100.00% <= 11 milliseconds
+48828.12 requests per second
+
+
+cicada:~$ redis-benchmark -t set,get -p 6379
+====== SET ======
+  100000 requests completed in 1.45 seconds
+  50 parallel clients
+  3 bytes payload
+  keep alive: 1
+
+99.37% <= 1 milliseconds
+99.95% <= 2 milliseconds
+99.96% <= 3 milliseconds
+99.99% <= 4 milliseconds
+100.00% <= 4 milliseconds
+68775.79 requests per second
+
+====== GET ======
+  100000 requests completed in 1.42 seconds
+  50 parallel clients
+  3 bytes payload
+  keep alive: 1
+
+99.92% <= 1 milliseconds
+100.00% <= 1 milliseconds
+70175.44 requests per second
+-----------------------

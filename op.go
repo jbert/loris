@@ -37,24 +37,62 @@ func decodeRespCommand(rCmd resp.Typ) (ServerOp, error) {
 	if !ok {
 		return nil, fmt.Errorf("Command is not array: %T", rCmd)
 	}
-	ss := make([]string, 0, len(a))
+	bufs := make([][]byte, 0, len(a))
 	for _, r := range a {
-		s, ok := r.(string)
+		buf, ok := r.([]byte)
 		if !ok {
-			return nil, fmt.Errorf("Command element is not string: %T", s)
+			return nil, fmt.Errorf("Command element is not []byte: %T", r)
 		}
-		ss = append(ss, s)
+		bufs = append(bufs, buf)
 	}
 
-	switch strings.ToLower(ss[0]) {
+	switch strings.ToLower(string(bufs[0])) {
+	case "command":
+		op := func(s *Server, w io.Writer) (resp.Typ, bool) {
+			return [][]byte{}, true
+		}
+		return op, nil
+	case "del":
+		op := func(s *Server, w io.Writer) (resp.Typ, bool) {
+			num_deleted := 0
+			for _, k := range bufs[1:] {
+				err := s.store.Del(store.Key(k))
+				if err == nil {
+					num_deleted += 1
+				}
+			}
+			return num_deleted, true
+		}
+		return op, nil
+	case "dbsize":
+		op := func(s *Server, w io.Writer) (resp.Typ, bool) {
+			n := s.store.Len()
+			return n, true
+		}
+		return op, nil
+	case "get":
+		op := func(s *Server, w io.Writer) (resp.Typ, bool) {
+			v, err := s.store.Get(store.Key(bufs[1]))
+			if err != nil {
+				if err == store.ErrNotExist {
+					return resp.TheNullBulkString, true
+				}
+				return err, true
+			}
+			return v, true
+		}
+		return op, nil
 	case "set":
-		op := func(s *Server, w io.Writer) (error, bool) {
-			err := s.store.Set(Key(ss[1]), Val(ss[2]))
-			fmt.Fprintf(w, "Server has %d keys\n", s.store.Len())
-			return err, false
+		op := func(s *Server, w io.Writer) (resp.Typ, bool) {
+			err := s.store.Set(store.Key(bufs[1]), store.Val(bufs[2]))
+			if err != nil {
+				return err, true
+			}
+			//			return fmt.Sprintf("Server has %d keys", s.store.Len()), false
+			return "OK", true
 		}
 		return op, nil
 	default:
-		return nil, fmt.Errorf("Unrecnogised command: %s", ss[0])
+		return nil, fmt.Errorf("Unrecognised command: %s", bufs[0])
 	}
 }

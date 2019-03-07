@@ -10,9 +10,25 @@ DONE - add set/get/delete key val
 - represent as Ops
     - Op can serialise to string. Yay.
 
+DONE - add constant 'NullBulkString' to resp.go
+    - return for non-existent GET
+
+DONE - add a test for number of keys deleted by Del over protocol
+    DONE - we don't return an error if the key doesn't exist from store.Del
+    DONE - so we return an incorrect count of keys deleted
+
+DONE - get redis-benchmark numbers (need to define subtests)
+
 WIP - find resp grammar
     WIP - parse RESP
     - compose RESP
+
+- implement structured responses
+
+- structure implemented commands
+    - needed for 'COMMAND' response
+    - make the text -> code representable in data for ParseCommand
+        
 
 - make ops consume resp and return resp?
 

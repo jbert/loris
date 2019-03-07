@@ -10,7 +10,7 @@ import (
 	"github.com/jbert/goredis/store"
 )
 
-type ServerOp func(*Server, io.Writer) (error, bool)
+type ServerOp func(*Server, io.Writer) (resp.Typ, bool)
 
 type Server struct {
 	store store.Store
@@ -23,7 +23,7 @@ func NewWithStore(s store.Store) *Server {
 	return &Server{
 		store: s,
 		ctx:   context.Background(),
-		debug: true,
+		debug: false,
 	}
 }
 
@@ -89,21 +89,16 @@ func (s *Server) handleConnection(ctx context.Context, conn net.Conn) {
 			r = NewDebugReader(r)
 		}
 		op, err := ParseCommand(r)
-		log.Printf("Op [%v] err [%v]", op, err)
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			// TODO: send resp
-			fmt.Fprintf(conn, "-%s\r\n", err.Error())
+			conn.Write(resp.TypToBuf(fmt.Errorf("Parsing error: %s", err)))
 			continue
 		}
 
-		err, ok := op(s, conn)
-		if err != nil {
-			// TODO: send resp
-			fmt.Fprintf(conn, "-%s\r\n", err.Error())
-		}
+		rsp, ok := op(s, conn)
+		conn.Write(resp.TypToBuf(rsp))
 		if !ok {
 			break
 		}
