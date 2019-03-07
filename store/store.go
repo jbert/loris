@@ -20,13 +20,13 @@ type Store interface {
 	Len() int
 }
 
-type ShardedStore struct {
+type Sharded struct {
 	shards []Store
 }
 
-func NewShardedStore(ctor func() Store) *ShardedStore {
+func NewSharded(ctor func() Store) *Sharded {
 	num_shards := 16
-	ss := ShardedStore{
+	ss := Sharded{
 		shards: make([]Store, num_shards, num_shards),
 	}
 	for i := range ss.shards {
@@ -35,7 +35,7 @@ func NewShardedStore(ctor func() Store) *ShardedStore {
 	return &ss
 }
 
-func (ss *ShardedStore) findShard(k Key) Store {
+func (ss *Sharded) findShard(k Key) Store {
 	// There are better hash functions
 	var n rune
 	for _, c := range k {
@@ -46,19 +46,19 @@ func (ss *ShardedStore) findShard(k Key) Store {
 	return ss.shards[n]
 }
 
-func (ss *ShardedStore) Set(k Key, v Val) error {
+func (ss *Sharded) Set(k Key, v Val) error {
 	return ss.findShard(k).Set(k, v)
 }
 
-func (ss *ShardedStore) Get(k Key) (Val, error) {
+func (ss *Sharded) Get(k Key) (Val, error) {
 	return ss.findShard(k).Get(k)
 }
 
-func (ss *ShardedStore) Del(k Key) error {
+func (ss *Sharded) Del(k Key) error {
 	return ss.findShard(k).Del(k)
 }
 
-func (ss *ShardedStore) Keys() []Key {
+func (ss *Sharded) Keys() []Key {
 	keys := make([]Key, 0)
 	for _, s := range ss.shards {
 		keys = append(keys, s.Keys()...)
@@ -66,7 +66,7 @@ func (ss *ShardedStore) Keys() []Key {
 	return keys
 }
 
-func (ss *ShardedStore) Len() int {
+func (ss *Sharded) Len() int {
 	l := 0
 	for i, s := range ss.shards {
 		log.Printf("JB - shard %d has %d", i, s.Len())
@@ -75,18 +75,105 @@ func (ss *ShardedStore) Len() int {
 	return l
 }
 
-type MutexMapStore struct {
+type Map map[Key]Val
+
+func NewMap() Map {
+	return make(map[Key]Val)
+}
+
+func (ms Map) Set(k Key, v Val) error {
+	m := map[Key]Val(ms)
+	m[k] = v
+	return nil
+}
+
+func (ms Map) Get(k Key) (Val, error) {
+	m := map[Key]Val(ms)
+	v, ok := m[k]
+	if !ok {
+		return nil, ErrNotExist
+	}
+	return v, nil
+}
+
+func (ms Map) Del(k Key) error {
+	m := map[Key]Val(ms)
+	_, exists := m[k]
+	if !exists {
+		return ErrNotExist
+	}
+
+	delete(ms, k)
+	return nil
+}
+
+func (ms Map) Keys() []Key {
+	m := map[Key]Val(ms)
+	keys := make([]Key, 0, len(m))
+	for k := range ms {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func (ms Map) Len() int {
+	m := map[Key]Val(ms)
+	return len(m)
+}
+
+type Mutex struct {
+	sync.Mutex
+	s Store
+}
+
+func NewMutex(s Store) *MutexStore {
+	return &Mutex{
+		s: s,
+	}
+}
+
+func (ms *Mutex) Set(k Key, v Val) error {
+	ms.Lock()
+	defer ms.Unlock()
+	return ms.Set(k, v)
+}
+
+func (ms *Mutex) Get(k Key) (Val, error) {
+	ms.Lock()
+	defer ms.Unlock()
+	return ms.Get(k)
+}
+
+func (ms *Mutex) Del(k Key) error {
+	ms.Lock()
+	defer ms.Unlock()
+	return ms.Del(k)
+}
+
+func (ms *Mutex) Keys() []Key {
+	ms.Lock()
+	defer ms.Unlock()
+	return ms.Keys()
+}
+
+func (ms *Mutex) Len() int {
+	ms.Lock()
+	defer ms.Unlock()
+	return ms.Len()
+}
+
+type MutexMap struct {
 	sync.Mutex
 	m map[Key]Val
 }
 
-func NewMutexMapStore() *MutexMapStore {
-	return &MutexMapStore{
+func NewMutexMap() *MutexMap {
+	return &MutexMap{
 		m: make(map[Key]Val),
 	}
 }
 
-func (mms *MutexMapStore) Set(k Key, v Val) error {
+func (mms *MutexMap) Set(k Key, v Val) error {
 	mms.Lock()
 	defer mms.Unlock()
 
@@ -94,7 +181,7 @@ func (mms *MutexMapStore) Set(k Key, v Val) error {
 	return nil
 }
 
-func (mms *MutexMapStore) Get(k Key) (Val, error) {
+func (mms *MutexMap) Get(k Key) (Val, error) {
 	mms.Lock()
 	defer mms.Unlock()
 
@@ -105,7 +192,7 @@ func (mms *MutexMapStore) Get(k Key) (Val, error) {
 	return v, nil
 }
 
-func (mms *MutexMapStore) Del(k Key) error {
+func (mms *MutexMap) Del(k Key) error {
 	mms.Lock()
 	defer mms.Unlock()
 
@@ -118,7 +205,7 @@ func (mms *MutexMapStore) Del(k Key) error {
 	return nil
 }
 
-func (mms *MutexMapStore) Keys() []Key {
+func (mms *MutexMap) Keys() []Key {
 	mms.Lock()
 	defer mms.Unlock()
 
@@ -129,7 +216,7 @@ func (mms *MutexMapStore) Keys() []Key {
 	return keys
 }
 
-func (mms *MutexMapStore) Len() int {
+func (mms *MutexMap) Len() int {
 	mms.Lock()
 	defer mms.Unlock()
 
