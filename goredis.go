@@ -5,26 +5,33 @@ import (
 	"io"
 	"log"
 	"net"
-)
 
-type Key string
-type Val []byte
+	"github.com/jbert/goredis/resp"
+	"github.com/jbert/goredis/store"
+)
 
 type ServerOp func(*Server, io.Writer) (error, bool)
 
 type Server struct {
-	store Store
+	store store.Store
 	ctx   context.Context
 
 	debug bool
 }
 
-func New() *Server {
+func NewWithStore(s store.Store) *Server {
 	return &Server{
-		store: NewMutexMapStore(),
+		store: s,
 		ctx:   context.Background(),
 		debug: true,
 	}
+}
+
+func New() *Server {
+	return NewWithStore(
+		//		store: store.NewMutexMapStore(),
+		store.NewShardedStore(func() store.Store { return store.NewMutexMapStore() }),
+	)
 }
 
 func (s *Server) ListenAndServe(hostport string) error {
@@ -66,10 +73,14 @@ func (dr *DebugReader) Read(p []byte) (int, error) {
 
 func (s *Server) handleConnection(ctx context.Context, conn net.Conn) {
 	id := ctx.Value("id").(int)
-	log.Printf("CONN %d - open", id)
+	if s.debug {
+		log.Printf("CONN %d - open", id)
+	}
 	defer func() {
 		conn.Close()
-		log.Printf("CONN %d - closed", id)
+		if s.debug {
+			log.Printf("CONN %d - closed", id)
+		}
 	}()
 
 	for {

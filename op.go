@@ -7,19 +7,20 @@ import (
 	"strings"
 
 	"github.com/jbert/goredis/resp"
+	"github.com/jbert/goredis/store"
 )
 
-type OpFunc func(s Store, k Key, v Val) (Val, error)
+type OpFunc func(s store.Store, k store.Key, v store.Val) (store.Val, error)
 
-func OpGet(s Store, k Key, v Val) (Val, error) {
+func OpGet(s store.Store, k store.Key, v store.Val) (store.Val, error) {
 	return s.Get(k)
 }
 
-func OpSet(s Store, k Key, v Val) (Val, error) {
+func OpSet(s store.Store, k store.Key, v store.Val) (store.Val, error) {
 	return v, s.Set(k, v)
 }
 
-func OpDel(s Store, k Key, v Val) (Val, error) {
+func OpDel(s store.Store, k store.Key, v store.Val) (store.Val, error) {
 	return nil, s.Del(k)
 }
 
