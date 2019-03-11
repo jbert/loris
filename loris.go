@@ -1,4 +1,4 @@
-package goredis // import "github.com/jbert/goredis"
+package loris // import "github.com/jbert/loris"
 import (
 	"context"
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/jbert/goredis/resp"
-	"github.com/jbert/goredis/store"
+	"github.com/jbert/loris/resp"
+	"github.com/jbert/loris/store"
 )
 
 type ServerOp func(*Server, io.Writer) (resp.Typ, bool)

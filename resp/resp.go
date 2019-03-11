@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jbert/goredis/store"
+	"github.com/jbert/loris/store"
 )
 
 var TheNullBulkString []byte = nil

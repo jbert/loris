@@ -1,4 +1,4 @@
-package goredis
+package loris
 
 import (
 	"bufio"
@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/jbert/goredis/resp"
-	"github.com/jbert/goredis/store"
+	"github.com/jbert/loris/resp"
+	"github.com/jbert/loris/store"
 )
 
 type OpFunc func(s store.Store, k store.Key, v store.Val) (store.Val, error)

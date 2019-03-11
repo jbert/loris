@@ -44,7 +44,7 @@ WIP - find resp grammar
     - or is there a redis-bench
 
 - start performance table
-    - compare redis with goredis?
+    - compare redis with loris?
 
 - add mutex
     - take performance measure

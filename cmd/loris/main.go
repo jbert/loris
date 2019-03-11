@@ -7,8 +7,8 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/jbert/goredis"
-	"github.com/jbert/goredis/store"
+	"github.com/jbert/loris"
+	"github.com/jbert/loris/store"
 )
 
 type opt struct {
@@ -51,7 +51,7 @@ func main() {
 		log.Fatalf("Error constructing store: %s", err)
 	}
 	log.Printf("Using store %s", o.storeName)
-	gr := goredis.NewWithStore(store, o.debug)
+	gr := loris.NewWithStore(store, o.debug)
 	if o.cpuProfile != "" {
 		f, err := os.Create(o.cpuProfile)
 		if err != nil {
