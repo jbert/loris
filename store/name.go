@@ -16,8 +16,7 @@ func NewFromName(storeName string) (Store, error) {
 	return newFromNameBits(bits)
 }
 
-func newFromNameBits(nameBits []string) (Store, error) {
-
+func ctorFromNameBits(nameBits []string) (func() Store, error) {
 	if len(nameBits) < 1 {
 		return nil, fmt.Errorf("Empty store name bits")
 	}
@@ -31,15 +30,29 @@ func newFromNameBits(nameBits []string) (Store, error) {
 
 	switch storeName {
 	case "map":
-		return NewMap(), nil
+		return func() Store { return NewMap() }, nil
 	case "mutexmap":
-		return NewMutexMap(), nil
+		return func() Store { return NewMutexMap() }, nil
 	case "mutex":
-		s, err := newFromNameBits(nameBits)
+		ctor, err := ctorFromNameBits(nameBits)
 		if err != nil {
 			return nil, fmt.Errorf("Mutex wrapper: %s", err)
 		}
-		return NewMutex(s), nil
+		return func() Store { return NewMutex(ctor) }, nil
+	case "shard":
+		ctor, err := ctorFromNameBits(nameBits)
+		if err != nil {
+			return nil, fmt.Errorf("Sharded store: %s", err)
+		}
+		return func() Store { return NewSharded(ctor) }, nil
 	}
 	return nil, fmt.Errorf("Unrecognised name: %s", storeName)
+}
+
+func newFromNameBits(nameBits []string) (Store, error) {
+	ctor, err := ctorFromNameBits(nameBits)
+	if err != nil {
+		return nil, err
+	}
+	return ctor(), nil
 }

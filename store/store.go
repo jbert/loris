@@ -30,7 +30,9 @@ func NewSharded(ctor func() Store) *Sharded {
 		shards: make([]Store, num_shards, num_shards),
 	}
 	for i := range ss.shards {
-		ss.shards[i] = ctor()
+		subStore := ctor()
+		//		log.Printf("JB - shard - subStore: %p", subStore)
+		ss.shards[i] = subStore
 	}
 	return &ss
 }
@@ -43,6 +45,7 @@ func (ss *Sharded) findShard(k Key) Store {
 		n = n >> 1
 	}
 	n = n % 16
+	//	log.Printf("Sharded - choosing shard [%d] for [%s]", int(n), k)
 	return ss.shards[n]
 }
 
@@ -78,6 +81,7 @@ func (ss *Sharded) Len() int {
 type Map map[Key]Val
 
 func NewMap() Map {
+	//	log.Printf("NewMap")
 	return make(map[Key]Val)
 }
 
@@ -126,10 +130,9 @@ type Mutex struct {
 	s Store
 }
 
-func NewMutex(s Store) *Mutex {
-	return &Mutex{
-		s: s,
-	}
+func NewMutex(ctor func() Store) *Mutex {
+	//	log.Printf("NewMutex")
+	return &Mutex{s: ctor()}
 }
 
 func (ms *Mutex) Set(k Key, v Val) error {
