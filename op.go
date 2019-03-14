@@ -25,7 +25,7 @@ func OpDel(s store.Store, k store.Key, v store.Val) (store.Val, error) {
 }
 
 func ParseCommand(r io.Reader) (ServerOp, error) {
-	respCmd, err := resp.Parse(bufio.NewReader(r))
+	respCmd, err := resp.Parse(bufio.NewScanner(r))
 	if err != nil {
 		return nil, err
 	}

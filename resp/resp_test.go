@@ -20,7 +20,7 @@ func TestBasic(t *testing.T) {
 
 	for _, tc := range testCases {
 		r := strings.NewReader(tc.s)
-		t, err := Parse(bufio.NewReader(r))
+		t, err := Parse(bufio.NewScanner(r))
 		a.NoError(err, "Can parse [%s]", tc.s)
 		a.Equal(tc.t, t)
 

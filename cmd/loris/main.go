@@ -51,7 +51,7 @@ func main() {
 		log.Fatalf("Error constructing store: %s", err)
 	}
 	log.Printf("Using store %s", o.storeName)
-	gr := loris.NewWithStore(store, o.debug)
+	l := loris.NewWithStore(store, o.debug)
 	if o.cpuProfile != "" {
 		f, err := os.Create(o.cpuProfile)
 		if err != nil {
@@ -63,6 +63,6 @@ func main() {
 		}
 		defer pprof.StopCPUProfile()
 	}
-	err = gr.ListenAndServe(fmt.Sprintf(":%d", o.port))
+	err = l.ListenAndServe(fmt.Sprintf(":%d", o.port))
 	log.Printf("Server exited: %s", err)
 }

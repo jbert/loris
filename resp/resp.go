@@ -3,8 +3,6 @@ package resp
 import (
 	"bufio"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/jbert/loris/store"
 )
@@ -53,12 +51,11 @@ func TypToBuf(t Typ) []byte {
 	}
 }
 
-func Parse(r *bufio.Reader) (Typ, error) {
-	c := make([]byte, 1)
-	n, err := r.Read(c)
-	if n != 1 || err != nil {
-		return nil, err
+func Parse(r *bufio.Scanner) (Typ, error) {
+	if !r.Scan() {
+		return nil, r.Err()
 	}
+	c := r.Bytes()
 	switch c[0] {
 	case '+':
 		panic("simple string")
@@ -67,66 +64,47 @@ func Parse(r *bufio.Reader) (Typ, error) {
 	case ':':
 		panic("integer")
 	case '$':
-		return ParseBulkString(r)
+		return ParseBulkString(r, c[1:])
 	case '*':
-		return ParseArray(r)
+		return ParseArray(r, c[1:])
 	}
 	return nil, fmt.Errorf("Unknown RESP prefix: [%02x] [%s]", c, c)
 }
 
-func readNumLine(parseContext string, r *bufio.Reader) (int, error) {
-	l, err := readRespLine(r)
-	if err != nil {
-		return 0, fmt.Errorf("Failed to read %s: %s", parseContext, err)
+func parseNumLine(c []byte) int {
+	var n int
+	for i := 0; i < len(c); i++ {
+		n *= 10
+		n += int(rune(c[i]) - '0')
 	}
-	size, err := strconv.Atoi(l)
-	if err != nil {
-		return 0, fmt.Errorf("%s not numeric: [%s]", parseContext, l)
-	}
-	return size, nil
+	return n
 }
 
-func readRespLine(r *bufio.Reader) (string, error) {
-	l, err := r.ReadString('\n')
-	if err != nil {
-		return "", fmt.Errorf("Failed to read line: %s", err)
+func ParseBulkString(r *bufio.Scanner, c []byte) (Typ, error) {
+	strlen := parseNumLine(c)
+	if !r.Scan() {
+		return nil, r.Err()
 	}
-	l = strings.TrimRight(l, "\r\n")
-	return l, nil
+
+	b := r.Bytes()
+
+	if len(b) != strlen {
+		return nil, fmt.Errorf("Length mismatch %d != %d", len(b), strlen)
+	}
+
+	return b, nil
 }
 
-func ParseBulkString(r *bufio.Reader) (Typ, error) {
-	strlen, err := readNumLine("bulk string length", r)
-	if err != nil {
-		return nil, err
-	}
-	s := make([]byte, strlen, strlen)
-	num_read := 0
-	for num_read < strlen {
-		n, err := r.Read(s[num_read:strlen])
-		if err != nil {
-			return nil, fmt.Errorf("Read [%d/%d] of bulk string: %s", num_read, strlen, err)
-		}
-		num_read += n
-	}
-	l, err := readRespLine(r)
-	if l != "" || err != nil {
-		return nil, fmt.Errorf("Failed to find CRLF at end of bulk string: %s", err)
-	}
-	return s, nil
-}
-
-func ParseArray(r *bufio.Reader) (Typ, error) {
-	size, err := readNumLine("array size", r)
-	if err != nil {
-		return nil, err
-	}
+func ParseArray(r *bufio.Scanner, c []byte) (Typ, error) {
+	size := parseNumLine(c)
+	
 	a := make([]Typ, size)
 	for i := 0; i < size; i++ {
-		a[i], err = Parse(r)
+		t, err := Parse(r)
 		if err != nil {
 			return nil, fmt.Errorf("Error reading array elt [%d]: %s", i, err)
 		}
+		a[i] = t
 	}
 	return a, nil
 }
