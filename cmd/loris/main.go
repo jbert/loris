@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"runtime/pprof"
 
 	"github.com/jbert/loris"
@@ -17,6 +18,7 @@ type opt struct {
 	debug     bool
 
 	cpuProfile string
+	memProfile string
 }
 
 func (o *opt) validate() error {
@@ -33,6 +35,7 @@ func getOpts() *opt {
 	flag.StringVar(&o.storeName, "store", "mutexmap", "Store name")
 	flag.BoolVar(&o.debug, "debug", false, "Enable debug output")
 	flag.StringVar(&o.cpuProfile, "cpuprofile", "", "Write CPU profile")
+	flag.StringVar(&o.memProfile, "memprofile", "", "Write Memory profile")
 	flag.Parse()
 
 	err := o.validate()
@@ -65,4 +68,15 @@ func main() {
 	}
 	err = gr.ListenAndServe(fmt.Sprintf(":%d", o.port))
 	log.Printf("Server exited: %s", err)
+	if o.memProfile != "" {
+		f, err := os.Create(o.memProfile)
+		if err != nil {
+			log.Fatal("could not create memory profile: ", err)
+		}
+		runtime.GC() // get up-to-date statistics
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			log.Fatal("could not write memory profile: ", err)
+		}
+		f.Close()
+	}
 }
