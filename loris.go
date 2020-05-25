@@ -36,15 +36,15 @@ func (s *Server) ListenAndServe(hostport string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to listen: %s", err)
 	}
-	conn_id := 0
+	connID := 0
 	go func() {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
 				log.Printf("Failed to accept: %s", err)
 			}
-			go s.handleConnection(context.WithValue(s.ctx, "id", conn_id), conn)
-			conn_id += 1
+			go s.handleConnection(context.WithValue(s.ctx, "id", connID), conn)
+			connID ++
 		}
 	}()
 	<-s.ctx.Done()
